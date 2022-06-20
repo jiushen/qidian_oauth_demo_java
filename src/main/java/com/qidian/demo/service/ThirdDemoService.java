@@ -211,10 +211,16 @@ public class ThirdDemoService {
     }
 
     public int getOrderCount(JSONObject jsonObject) {
+        if (ObjectUtils.isEmpty(jsonObject)) {
+            return 0;
+        }
         return jsonObject.getInteger("total");
     }
 
     public String getLastOrderTime(JSONObject jsonObject) {
+        if (ObjectUtils.isEmpty(jsonObject)) {
+            return "";
+        }
         JSONArray data = jsonObject.getJSONArray("data");
         DateTime min = null;
         if (!ObjectUtils.isEmpty(data)) {
@@ -228,10 +234,13 @@ public class ThirdDemoService {
                 }
             }
         }
-        return min.toString("yyyy-MM-dd hh:mm:ss");
+        return min == null ? "" : min.toString("yyyy-MM-dd hh:mm:ss");
     }
 
     public double getAvrOrderPrice(JSONObject jsonObject) {
+        if (ObjectUtils.isEmpty(jsonObject)) {
+            return 0;
+        }
         JSONArray data = jsonObject.getJSONArray("data");
         double sum = 0;
         if (!ObjectUtils.isEmpty(data)) {
@@ -240,6 +249,8 @@ public class ThirdDemoService {
                 double total = value.getDouble("total");
                 sum += total;
             }
+        } else {
+            return 0;
         }
         return sum / data.size();
     }

@@ -28,16 +28,18 @@ public class OpenApiController {
      */
     @RequestMapping("/getUserInfo")
     public Result getUserInfo(@RequestParam(value = "uid", required = true) String uid) {
-        //String openId = thirdQidianService.getOpenIdByCustId(uid);
-        String openId = "";
+        String custId = thirdQidianService.getCuinBySocialAccount(uid, "3");
+        if (StringUtils.isEmpty(custId)) {
+            return Result.createSuccess();
+        }
+        String openId = thirdQidianService.getOpenIdByCustId(custId);
         if (StringUtils.isEmpty(openId)) {
-            openId = uid;
+            return Result.createSuccess();
         }
         return Result.createSuccess(thirdDemoService.getUserInfo(openId));
     }
 
     /**
-     *
      * @param limit
      * @param page
      * @param index
@@ -76,10 +78,13 @@ public class OpenApiController {
                                @RequestParam(value = "keywords", required = false) String keywords,
                                @RequestParam(value = "uid", required = false) String uid) {
 
-        //String openId = thirdQidianService.getOpenIdByCustId(uid);
-        String openId = "";
+        String custId = thirdQidianService.getCuinBySocialAccount(uid, "3");
+        if (StringUtils.isEmpty(custId)) {
+            return Result.createSuccess();
+        }
+        String openId = thirdQidianService.getOpenIdByCustId(custId);
         if (StringUtils.isEmpty(openId)) {
-            openId = uid;
+            return Result.createSuccess();
         }
         return Result.createSuccess(thirdDemoService.getOrderList(limit, page, index, sort, openId, keywords));
     }

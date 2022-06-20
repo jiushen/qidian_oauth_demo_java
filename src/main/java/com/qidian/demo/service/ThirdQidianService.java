@@ -8,6 +8,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
@@ -90,7 +91,7 @@ public class ThirdQidianService {
                     HttpMethod.POST, httpEntity, JSONObject.class);
             if (200 == responseEntity.getStatusCodeValue()) {
                 JSONObject response = responseEntity.getBody();
-                if ("0" == response.getString("r")) {
+                if ("0".equalsIgnoreCase(response.getString("r"))) {
                     JSONObject data = response.getJSONObject("data");
                     return data.getString("cust_id");
                 }
@@ -110,7 +111,7 @@ public class ThirdQidianService {
      */
     public String getOpenIdByCustId(String custId) {
         JSONObject customerInfo = getSingCustBaseInfo(custId);
-        return customerInfo.getJSONObject("identity").getString("third_party_id");
+        return ObjectUtils.isEmpty(customerInfo) ? "" : customerInfo.getJSONObject("identity").getString("third_party_id");
     }
 
     /**
