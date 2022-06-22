@@ -1,9 +1,12 @@
 package com.qidian.demo.sdk;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.qidian.demo.util.Sha1;
 import com.qidian.demo.util.WxBizMsgCrypt;
 import com.qidian.demo.util.XmlParse;
+import org.springframework.util.ObjectUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -106,14 +109,20 @@ public class CommonUtil {
      * @return Appid MsgType ApplicationId AuthorizeTime
      * @throws Exception 执行失败，请查看该异常的错误码和具体的错误信息
      */
-    public Map<String, Object> getEvents(String encodingAesKey, String token, String msgSignature, String timeStamp,
-                                         String nonce, String xmlTexts) throws Exception {
+    public JSONObject getEvents(String encodingAesKey, String token, String msgSignature, String timeStamp,
+                                String nonce, String xmlTexts) throws Exception {
         String decryptXml = new CommonUtil().decryptXml(encodingAesKey, token, msgSignature, timeStamp, nonce,
                 xmlTexts);
-        @SuppressWarnings("unchecked")
-        Map<String, Object> resultEvents = (Map<String, Object>) JSONObject
-                .parseObject(XmlParse.xml2json(decryptXml), Map.class).get("Msg");
-        return resultEvents;
+        JSONObject xmlObject = JSONObject
+                .parseObject(XmlParse.xml2json(decryptXml), JSONObject.class);
+        if (!ObjectUtils.isEmpty(xmlObject)) {
+            Object externalItem = xmlObject.getJSONObject("xml").getJSONArray("ExternalItem").get(0);
+            if (!ObjectUtils.isEmpty(externalItem)) {
+                return JSONObject.parseObject(JSON.toJSONString(externalItem));
+            }
+        }
+
+        return null;
     }
 
     /**

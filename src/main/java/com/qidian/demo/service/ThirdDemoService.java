@@ -3,6 +3,7 @@ package com.qidian.demo.service;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 import java.time.format.DateTimeFormatter;
 
 @Service
+@Slf4j
 public class ThirdDemoService {
 
     @Autowired
@@ -128,6 +130,39 @@ public class ThirdDemoService {
     }
 
     /**
+     * 获取用户信息
+     *
+     * @param openId
+     * @return
+     */
+    public int getUserUidByOpenId(String openId) {
+        HttpHeaders requestHeaders = new HttpHeaders();
+        requestHeaders.add("Authorization", getBearerTokenForAdmin());
+        HttpEntity httpEntity = new HttpEntity(requestHeaders);
+
+        try {
+            ResponseEntity<JSONObject> responseEntity = restTemplate.exchange(demoUrl + "/api/v1/admin/member/findMemberByUserId?uid=" + openId,
+                    HttpMethod.GET, httpEntity, JSONObject.class);
+            JSONObject response = responseEntity.getBody();
+            if ("ok".equalsIgnoreCase(response.getString("result"))) {
+                JSONObject message = response.getJSONObject("message");
+                if (!ObjectUtils.isEmpty(message)) {
+                    JSONArray data = message.getJSONArray("data");
+                    if (!ObjectUtils.isEmpty(data)) {
+                        JSONObject user = data.getObject(0, JSONObject.class);
+                        return user.getInteger("id");
+                    }
+                }
+                return 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+        return 0;
+    }
+
+    /**
      * 获取商品列表
      *
      * @param limit
@@ -181,17 +216,18 @@ public class ThirdDemoService {
      * @param page
      * @param index
      * @param sort
-     * @param uid
+     * @param openId
      * @param keywords
      * @return
      */
-    public JSONObject getOrderList(Integer limit, Integer page, Integer index, String sort, String uid, String keywords) {
+    public JSONObject getOrderList(Integer limit, Integer page, Integer index, String sort, String openId, String keywords) {
         HttpHeaders requestHeaders = new HttpHeaders();
         requestHeaders.add("Authorization", getBearerTokenForAdmin());
         HttpEntity httpEntity = new HttpEntity(requestHeaders);
         try {
+
             StringBuffer url = new StringBuffer(demoUrl + "/api/v1/admin/indent/listByUid?limit="
-                    + limit + "&page=" + page + "&activeIndex=" + index + "&sort=" + sort + "&uid=" + uid);
+                    + limit + "&page=" + page + "&activeIndex=" + index + "&sort=" + sort + "&uid=" + getUserUidByOpenId(openId));
 
             if (!StringUtils.isEmpty(keywords)) {
                 url = url.append("&title=" + keywords);
