@@ -42,9 +42,9 @@ public class GuavaConfig {
      * 每个cache缺省3600秒过期，最大个数1000
      */
     public enum Caches {
-        user(60, 2),
-        visitor(60, 2),
-        info(5),
+        user(DEFAULT_TTL, 2),
+        visitor(DEFAULT_TTL, 2),
+        info(DEFAULT_TTL),
         role;
 
         private int maxSize = DEFAULT_MAXSIZE;    //最大數量

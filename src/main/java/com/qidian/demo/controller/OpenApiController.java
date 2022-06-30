@@ -1,11 +1,13 @@
 package com.qidian.demo.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.qidian.demo.model.Result;
 import com.qidian.demo.sdk.CommonUtil;
 import com.qidian.demo.service.GuavaService;
 import com.qidian.demo.service.ThirdDemoService;
 import com.qidian.demo.service.ThirdQidianService;
+import com.qidian.demo.service.WpaQidianService;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,11 +16,15 @@ import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/app")
+@CrossOrigin(origins = "*", methods = {RequestMethod.GET, RequestMethod.POST})
 @Slf4j
 public class OpenApiController {
 
@@ -30,6 +36,9 @@ public class OpenApiController {
 
     @Autowired
     private GuavaService guavaService;
+
+    @Autowired
+    private WpaQidianService wpaQidianService;
 
     /**
      * 获取用户信息
@@ -72,6 +81,28 @@ public class OpenApiController {
             return Result.createSuccess(thirdDemoService.getGoodsList(limit, page, index, sort, "", type, keywords));
         }
         return Result.createSuccess(thirdDemoService.getGoodsList(limit, page, index, sort, guavaService.findGoodsIdByVisitorId(uid), type, keywords));
+    }
+
+    /**
+     * @param limit
+     * @param page
+     * @param index
+     * @param keywords
+     * @param uid
+     * @return
+     */
+    @RequestMapping("/getConsultGoods")
+    public Result getGoodsList(@RequestParam(value = "limit", required = false) Integer limit,
+                               @RequestParam(value = "page", required = false) Integer page,
+                               @RequestParam(value = "index", required = false) Integer index,
+                               @RequestParam(value = "sort", required = false) String sort,
+                               @RequestParam(value = "keywords", required = false) String keywords,
+                               @RequestParam(value = "uid", required = true) String uid) {
+        String goodsId = guavaService.findGoodsIdByVisitorId(uid);
+        if (StringUtils.isEmpty(goodsId)) {
+            return Result.createSuccess();
+        }
+        return Result.createSuccess(thirdDemoService.getGoodsList(limit, page, index, sort, goodsId, "", keywords));
     }
 
     /**
@@ -132,6 +163,44 @@ public class OpenApiController {
                           @RequestHeader(value = "Authorization", required = false) String authorization) {
         thirdQidianService.sendToC(params);
         return Result.createSuccess();
+    }
+
+    /**
+     * 发送消息
+     *
+     * @param msg
+     * @param authorization
+     * @return
+     */
+    @RequestMapping("/sendMsgToC")
+    public Result sendToC(@RequestParam(value = "msg", required = false) String msg,
+                          @RequestHeader(value = "Authorization", required = false) String authorization) throws UnsupportedEncodingException {
+        log.info(JSON.parseObject(URLDecoder.decode(msg, "UTF-8")).toJSONString());
+        thirdQidianService.sendToC(JSON.parseObject(URLDecoder.decode(msg, "UTF-8")));
+        return Result.createSuccess();
+    }
+
+    /**
+     * 获取自定义接待人的openid
+     *
+     * @return
+     */
+    @RequestMapping("/getImGroupId")
+    public Result getImGroupId(@RequestParam(value = "offset", required = false, defaultValue = "1") Integer offset,
+                               @RequestParam(value = "count", required = false, defaultValue = "10") Integer count) {
+        log.info("getImGroupId ssss");
+        return Result.createSuccess(wpaQidianService.getImGroupId(offset, count));
+    }
+
+    /**
+     * 获取自定义接待人的openid
+     *
+     * @return
+     */
+    @RequestMapping("/getWpaOpenId")
+    public Result getWpaOpenId() {
+        log.info("getImGroupId ssss");
+        return Result.createSuccess(wpaQidianService.getWpaOpenId());
     }
 
     /**
