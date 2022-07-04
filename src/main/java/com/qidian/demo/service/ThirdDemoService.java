@@ -117,7 +117,7 @@ public class ThirdDemoService {
                 JSONObject message = response.getJSONObject("message");
                 JSONObject orderList = getOrderList(1000, 1, 0, "-created_at", uid, "");
                 message.put("buy_count", getOrderCount(orderList));
-                message.put("buy_last_time ", getLastOrderTime(orderList));
+                message.put("buy_last_time", getLastOrderTime(orderList));
                 message.put("avr_order_price", getAvrOrderPrice(orderList));
                 message.put("coupon_count", 0);
                 return message;
