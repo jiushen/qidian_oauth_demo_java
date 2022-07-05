@@ -44,6 +44,7 @@ public class GuavaConfig {
     public enum Caches {
         user(DEFAULT_TTL, 2),
         visitor(DEFAULT_TTL, 2),
+        token(DEFAULT_TTL, 2),
         info(DEFAULT_TTL),
         role;
 

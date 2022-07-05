@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -17,6 +19,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -36,6 +40,9 @@ public class ThirdDemoService {
 
     @Value("${third.demo.applySecret}")
     private String applySecret;
+
+    // 模拟db操作,实际需要持久化到db
+    private static Map<String, String> tokenMap = new HashMap<>();
 
     /**
      * 获取demo电商系统token信息
@@ -73,7 +80,11 @@ public class ThirdDemoService {
      *
      * @return
      */
+    @Cacheable(value = "token", key = "token")
     public String getBearerTokenForAdmin() {
+        if (tokenMap.containsKey("token")) {
+            return tokenMap.get("token");
+        }
         JSONObject body = new JSONObject();
         body.put("username", username);
         body.put("password", password);
@@ -88,13 +99,22 @@ public class ThirdDemoService {
             JSONObject response = responseEntity.getBody();
             if ("ok".equalsIgnoreCase(response.getString("result"))) {
                 JSONObject message = response.getJSONObject("message");
-                return message.getString("token_type") + " " + message.getString("access_token");
+                String token = message.getString("token_type") + " " + message.getString("access_token");
+                cacheToken(token);
+                return token;
             }
         } catch (Exception e) {
             e.printStackTrace();
             return "";
         }
         return "";
+    }
+
+    @CachePut(value = "token", key = "token")
+    public String cacheToken(String token) {
+        log.info("cacheToken, token: {}", token);
+        tokenMap.put("token", token);
+        return token;
     }
 
 
@@ -106,7 +126,11 @@ public class ThirdDemoService {
      */
     public JSONObject getUserInfo(String uid) {
         HttpHeaders requestHeaders = new HttpHeaders();
-        requestHeaders.add("Authorization", getBearerTokenForAdmin());
+        String token = getBearerTokenForAdmin();
+        if (StringUtils.isEmpty(token)) {
+            return null;
+        }
+        requestHeaders.add("Authorization", token);
         HttpEntity httpEntity = new HttpEntity(requestHeaders);
 
         try {
@@ -137,7 +161,11 @@ public class ThirdDemoService {
      */
     public int getUserUidByOpenId(String openId) {
         HttpHeaders requestHeaders = new HttpHeaders();
-        requestHeaders.add("Authorization", getBearerTokenForAdmin());
+        String token = getBearerTokenForAdmin();
+        if (StringUtils.isEmpty(token)) {
+            return 0;
+        }
+        requestHeaders.add("Authorization", token);
         HttpEntity httpEntity = new HttpEntity(requestHeaders);
 
         try {
@@ -174,7 +202,11 @@ public class ThirdDemoService {
      */
     public JSONObject getGoodsList(Integer limit, Integer page, Integer index, String sort, String goodsId, String type, String keywords) {
         HttpHeaders requestHeaders = new HttpHeaders();
-        requestHeaders.add("Authorization", getBearerTokenForAdmin());
+        String token = getBearerTokenForAdmin();
+        if (StringUtils.isEmpty(token)) {
+            return null;
+        }
+        requestHeaders.add("Authorization", token);
         HttpEntity httpEntity = new HttpEntity(requestHeaders);
         try {
             StringBuffer url = new StringBuffer();
@@ -222,7 +254,11 @@ public class ThirdDemoService {
      */
     public JSONObject getOrderList(Integer limit, Integer page, Integer index, String sort, String openId, String keywords) {
         HttpHeaders requestHeaders = new HttpHeaders();
-        requestHeaders.add("Authorization", getBearerTokenForAdmin());
+        String token = getBearerTokenForAdmin();
+        if (StringUtils.isEmpty(token)) {
+            return null;
+        }
+        requestHeaders.add("Authorization", token);
         HttpEntity httpEntity = new HttpEntity(requestHeaders);
         try {
 
